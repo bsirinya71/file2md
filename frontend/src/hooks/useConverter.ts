@@ -1,32 +1,28 @@
 import { useState } from 'react';
-import type { ConversionOptions } from '../types';
+import type { DocumentBlock } from '../types';
 
 const API_URL = 'http://127.0.0.1:8000/api/v1/converter/convert';
 
 export function useConverter() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const [markdown, setMarkdown] = useState<string>('');
-  const [rawMarkdown, setRawMarkdown] = useState<string>(''); // ต้นฉบับตอนแปลงเสร็จ ใช้เทียบตอนแก้ไข
+  const [blocks, setBlocks] = useState<DocumentBlock[]>([]);
 
-  const convert = async (uploadedFile: File, options: ConversionOptions) => {
+  const uploadFile = async (uploadedFile: File) => {
     setLoading(true);
     setFile(uploadedFile);
 
     const formData = new FormData();
     formData.append('file', uploadedFile);
-    formData.append('strip_headers_footers', String(options.stripHeaders));
-    formData.append('clean_whitespace', String(options.cleanWhitespace));
-    formData.append('remove_icons', String(options.removeIcons));
-    formData.append('add_llm_prompt', String(options.addLlmPrompt));
+    // ไม่ส่ง options แล้ว — backend ทำแค่ OCR + จัดหมวดหมู่ block เท่านั้น
+    // การกรอง/ประกอบ markdown ตาม options ทำที่ frontend ทั้งหมด
 
     try {
       const response = await fetch(API_URL, { method: 'POST', body: formData });
       if (!response.ok) throw new Error('Conversion failed');
 
       const data = await response.json();
-      setMarkdown(data.markdown);
-      setRawMarkdown(data.markdown);
+      setBlocks(data.blocks ?? []);
     } catch (err) {
       alert('เกิดข้อผิดพลาดในการแปลงไฟล์ กรุณาตรวจสอบว่า Backend FastAPI รันอยู่หรือไม่');
       console.error(err);
@@ -35,5 +31,5 @@ export function useConverter() {
     }
   };
 
-  return { file, loading, markdown, rawMarkdown, setMarkdown, convert };
+  return { file, loading, blocks, uploadFile };
 }

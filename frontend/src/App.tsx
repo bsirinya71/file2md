@@ -1,8 +1,9 @@
-import { useState, type ChangeEvent } from 'react';
+import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
 import type { ActiveTab, ConversionOptions } from './types';
 import { useConverter } from './hooks/useConverter';
 import { useTheme } from './hooks/useTheme';
 import { useStats } from './hooks/useStats';
+import { composeMarkdown, composeMarkdownForStats } from './utils/markdownCompose';
 
 import Header from './components/Header';
 import OptionsToolbar from './components/OptionsToolbar';
@@ -14,27 +15,36 @@ import ConversionDivider from './components/ConversionDivider';
 import StatsFooter from './components/StatsFooter';
 
 export default function App() {
-  const { file, loading, markdown, rawMarkdown, setMarkdown, convert } = useConverter();
+  const { file, loading, blocks, uploadFile } = useConverter();
   const { theme, toggleTheme } = useTheme();
-  const { stats, optimization } = useStats(markdown, rawMarkdown);
 
   const [options, setOptions] = useState<ConversionOptions>({
     stripHeaders: false,
     cleanWhitespace: true,
     removeIcons: false,
+    includeImages: true,
     addLlmPrompt: false,
   });
 
+  // markdown เต็ม (มีรูปจริง) ไว้ preview / copy / download
+  const composed = useMemo(() => composeMarkdown(blocks, options), [blocks, options]);
+
+  // markdown เวอร์ชัน "สะอาด" ไว้คำนวณ stats เท่านั้น (ตัด base64 ออก)
+  const composedForStats = useMemo(
+    () => composeMarkdownForStats(blocks, options),
+    [blocks, options]
+  );
+
+  const [markdown, setMarkdown] = useState('');
+  useEffect(() => {
+    setMarkdown(composed);
+  }, [composed]);
+
+  const { stats, optimization } = useStats(composedForStats, composedForStats);
   const [activeTab, setActiveTab] = useState<ActiveTab>('editor');
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      convert(e.target.files[0], options);
-    }
-  };
-
-  const handleFile = (selectedFile: File) => {
-    convert(selectedFile, options);
+    if (e.target.files && e.target.files[0]) uploadFile(e.target.files[0]);
   };
 
   return (
@@ -54,7 +64,7 @@ export default function App() {
         {loading ? (
           <LoadingState />
         ) : !markdown ? (
-          <EmptyState onFileDrop={handleFile} />
+          <EmptyState onFileDrop={uploadFile} />
         ) : (
           <>
             <EditorPanel markdown={markdown} onChange={setMarkdown} activeTab={activeTab} />

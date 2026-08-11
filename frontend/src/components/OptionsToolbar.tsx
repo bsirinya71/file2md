@@ -15,6 +15,7 @@ const TOGGLES: { key: keyof ConversionOptions; label: string }[] = [
   { key: 'cleanWhitespace', label: 'clean whitespace' },
   { key: 'stripHeaders', label: 'strip headers/footers' },
   { key: 'removeIcons', label: 'remove icons' },
+  { key: 'includeImages', label: 'include images' },
   { key: 'addLlmPrompt', label: 'add llm directive' },
 ];
 
