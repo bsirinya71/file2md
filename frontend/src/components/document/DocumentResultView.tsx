@@ -5,6 +5,7 @@ import { DocumentHeader } from './DocumentHeader';
 import { StatsSummary } from './StatsSummary';
 import { AstInspector } from './AstInspector';
 import { JsonViewer } from './JsonViewer';
+import { MarkdownWorkspace } from '../../components/markdown/MarkdownWorkspace';
 
 interface DocumentResultViewProps {
   ast: DocumentAst;
@@ -12,7 +13,7 @@ interface DocumentResultViewProps {
 }
 
 export const DocumentResultView: React.FC<DocumentResultViewProps> = ({ ast, onReset }) => {
-  const [activeTab, setActiveTab] = useState<'structured' | 'json'>('structured');
+  const [activeTab, setActiveTab] = useState<'markdown' | 'structured' | 'json'>('markdown');
   const stats = calculateAstStats(ast);
 
   return (
@@ -23,6 +24,17 @@ export const DocumentResultView: React.FC<DocumentResultViewProps> = ({ ast, onR
 
       <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm space-y-4">
         <div className="flex border-b border-gray-200 space-x-4">
+          <button
+            type="button"
+            onClick={() => setActiveTab('markdown')}
+            className={`pb-2.5 text-xs font-bold transition-colors border-b-2 ${
+              activeTab === 'markdown'
+                ? 'border-brand-500 text-brand-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Markdown Editor & Preview
+          </button>
           <button
             type="button"
             onClick={() => setActiveTab('structured')}
@@ -47,11 +59,9 @@ export const DocumentResultView: React.FC<DocumentResultViewProps> = ({ ast, onR
           </button>
         </div>
 
-        {activeTab === 'structured' ? (
-          <AstInspector blocks={ast.blocks} />
-        ) : (
-          <JsonViewer data={ast} />
-        )}
+        {activeTab === 'markdown' && <MarkdownWorkspace sessionId={ast.session_id} />}
+        {activeTab === 'structured' && <AstInspector blocks={ast.blocks} />}
+        {activeTab === 'json' && <JsonViewer data={ast} />}
       </div>
     </div>
   );

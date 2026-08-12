@@ -118,7 +118,19 @@ export const AstBlockCard: React.FC<AstBlockCardProps> = ({ block, index }) => {
         );
       }
       case 'image': {
-        const b = block as ImageAstBlock;
+        const b = block as unknown as Record<string, unknown>;
+        const metadata = (b.metadata || {}) as Record<string, unknown>;
+        
+        // ค้นหาคีย์ Image ID จากทุกตำแหน่งที่อาจจะถูกส่งมา
+        const imageId = String(
+          b.image_id || b.id || metadata.image_id || metadata.id || 'N/A'
+        );
+        
+        // ค้นหาคีย์ Asset Path / Preview URL
+        const assetPath = String(
+          b.asset_path || b.preview_url || metadata.asset_path || metadata.preview_url || ''
+        );
+
         return (
           <div className="space-y-1">
             <div className="flex items-center space-x-2">
@@ -126,8 +138,10 @@ export const AstBlockCard: React.FC<AstBlockCardProps> = ({ block, index }) => {
               <span className="text-xs text-gray-400 font-mono">#{index + 1}</span>
             </div>
             <div className="p-2 bg-gray-50 rounded border border-gray-200 flex items-center space-x-3 text-xs">
-              <span className="font-semibold text-gray-800">ID: {b.image_id}</span>
-              <span className="text-gray-500 truncate max-w-xs">{b.asset_path}</span>
+              <span className="font-semibold text-gray-800">ID: {imageId}</span>
+              {assetPath && assetPath !== 'undefined' && (
+                <span className="text-gray-500 truncate max-w-xs">{assetPath}</span>
+              )}
             </div>
           </div>
         );
