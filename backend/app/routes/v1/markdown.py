@@ -1,7 +1,11 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from app.controllers.markdown_controller import markdown_controller
 from app.schemas.extraction import ExtractionRequest
-from app.schemas.markdown_ast import DocumentAST, MarkdownGenerationResult
+from app.schemas.markdown_ast import (
+    DocumentAST,
+    LLMMarkdownGenerationResult,
+    MarkdownGenerationResult,
+)
 from app.schemas.response import APIResponse
 
 router = APIRouter()
@@ -15,3 +19,11 @@ async def generate_ast(request: ExtractionRequest):
 @router.post("/markdown/generate", response_model=APIResponse[MarkdownGenerationResult])
 async def generate_standard_markdown(request: ExtractionRequest):
     return await markdown_controller.generate_standard_markdown(request)
+
+
+@router.post("/markdown/generate-llm", response_model=APIResponse[LLMMarkdownGenerationResult])
+async def generate_llm_markdown(
+    request: ExtractionRequest,
+    remove_decorative: bool = Query(True, description="ลบรูปภาพประดับตกแต่งเพื่อประหยัด Token")
+):
+    return await markdown_controller.generate_llm_markdown(request, remove_decorative)

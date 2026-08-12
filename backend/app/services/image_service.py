@@ -141,5 +141,15 @@ class ImageService:
         session_registry[sha256_hash] = image_info
         return image_info
 
+    def update_ai_description(self, session_id: str, image_id: str, ai_description: str) -> bool:
+        """
+        Attach AI Description to image info in session registry.
+        """
+        if session_id in self._session_hash_registry:
+            for info in self._session_hash_registry[session_id].values():
+                if info.image_id == image_id:
+                    info.ai_description = ai_description
+                    return True
+        return False
 
 image_service = ImageService()

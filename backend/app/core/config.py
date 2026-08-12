@@ -1,4 +1,3 @@
-import os
 from typing import List, Set, Union
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -25,6 +24,11 @@ class Settings(BaseSettings):
         "image/jpeg",
         "image/webp"
     }
+
+    # AI Settings
+    AI_PROVIDER: str = "gemini"
+    GEMINI_API_KEY: str = ""
+    GEMINI_MODEL: str = "gemini-2.5-flash"
 
     CORS_ORIGINS: List[str] = ["http://localhost:5173", "http://localhost:3000"]
 

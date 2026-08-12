@@ -20,7 +20,7 @@ class ASTBaseBlock(BaseModel):
 
 class HeadingASTBlock(ASTBaseBlock):
     block_type: ASTBlockType = ASTBlockType.HEADING
-    level: int  # 1 to 6
+    level: int
     text: str
 
 
@@ -83,3 +83,17 @@ class MarkdownGenerationResult(BaseModel):
     session_id: str
     markdown: str
     block_count: int
+
+
+class LLMMarkdownOptions(BaseModel):
+    remove_decorative_images: bool = True
+    include_image_tags: bool = True
+    estimated_token_saving_percent: Optional[float] = None
+
+
+class LLMMarkdownGenerationResult(BaseModel):
+    session_id: str
+    markdown: str
+    block_count: int
+    filtered_images_count: int
+    options_used: LLMMarkdownOptions
