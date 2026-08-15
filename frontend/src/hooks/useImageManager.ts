@@ -3,7 +3,6 @@ import { ImageBlock, ImageCategory } from '../types/image';
 import { imageService } from '../services/imageService';
 
 export function useImageManager(sessionId: string, initialImages: unknown[] = []) {
-  // Helper สำหรับแปลงรูปโครงสร้าง Backend -> ImageBlock ของ Frontend
   const normalizeImages = (rawImages: unknown[]): ImageBlock[] => {
     return rawImages.map((img) => {
       const item = img as Record<string, unknown>;
@@ -23,7 +22,7 @@ export function useImageManager(sessionId: string, initialImages: unknown[] = []
           size: Number(item.size || item.size_bytes || metadata.size || 0),
         },
         preview: {
-          url: imageService.getImageUrl(sessionId, id, 'thumbnail'),
+          url: imageService.getImageUrl(sessionId, id, 'original'),
         },
         asset: {
           url: imageService.getImageUrl(sessionId, id, 'original'),
@@ -64,7 +63,7 @@ export function useImageManager(sessionId: string, initialImages: unknown[] = []
         setImages(normalizeImages(res.images));
       }
     } catch {
-      // Fallback
+      // Fallback to initial AST images
     } finally {
       setIsLoading(false);
     }
@@ -92,6 +91,46 @@ export function useImageManager(sessionId: string, initialImages: unknown[] = []
     );
   }, []);
 
+  /**
+   * Restore a skipped/decorative image back to 'content' category
+   */
+  const restoreImage = useCallback((imageId: string) => {
+    setImages((prev) =>
+      prev.map((img) => {
+        if (img.id === imageId) {
+          return {
+            ...img,
+            classification: {
+              ...img.classification,
+              category: 'content' as ImageCategory,
+            },
+          };
+        }
+        return img;
+      })
+    );
+  }, []);
+
+  /**
+   * Mark image as permanently skipped/decorative
+   */
+  const skipImage = useCallback((imageId: string) => {
+    setImages((prev) =>
+      prev.map((img) => {
+        if (img.id === imageId) {
+          return {
+            ...img,
+            classification: {
+              ...img.classification,
+              category: 'decorative' as ImageCategory,
+            },
+          };
+        }
+        return img;
+      })
+    );
+  }, []);
+
   const filteredImages = useMemo(() => {
     return images.filter((img) => {
       const categoryMatch =
@@ -109,6 +148,10 @@ export function useImageManager(sessionId: string, initialImages: unknown[] = []
     });
   }, [images, activeCategory, searchQuery]);
 
+  const skippedImages = useMemo(() => {
+    return images.filter((img) => img.classification?.category === 'decorative');
+  }, [images]);
+
   const stats = useMemo(() => {
     return {
       total: images.length,
@@ -121,6 +164,7 @@ export function useImageManager(sessionId: string, initialImages: unknown[] = []
 
   return {
     images: filteredImages,
+    skippedImages,
     allImages: images,
     stats,
     isLoading,
@@ -129,6 +173,8 @@ export function useImageManager(sessionId: string, initialImages: unknown[] = []
     searchQuery,
     setSearchQuery,
     updateAltText,
+    restoreImage,
+    skipImage,
     refreshImages: fetchImages,
   };
 }
