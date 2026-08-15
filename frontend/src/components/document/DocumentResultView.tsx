@@ -6,6 +6,7 @@ import { StatsSummary } from './StatsSummary';
 import { AstInspector } from './AstInspector';
 import { JsonViewer } from './JsonViewer';
 import { MarkdownWorkspace } from '../../components/markdown/MarkdownWorkspace';
+import { ImageManagerView } from '../image/ImageManagerView';
 
 interface DocumentResultViewProps {
   ast: DocumentAst;
@@ -13,7 +14,7 @@ interface DocumentResultViewProps {
 }
 
 export const DocumentResultView: React.FC<DocumentResultViewProps> = ({ ast, onReset }) => {
-  const [activeTab, setActiveTab] = useState<'markdown' | 'structured' | 'json'>('markdown');
+  const [activeTab, setActiveTab] = useState<'markdown' | 'images' | 'structured' | 'json'>('markdown');
   const stats = calculateAstStats(ast);
 
   return (
@@ -34,6 +35,17 @@ export const DocumentResultView: React.FC<DocumentResultViewProps> = ({ ast, onR
             }`}
           >
             Markdown Editor & Preview
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('images')}
+            className={`pb-2.5 text-xs font-bold transition-colors border-b-2 ${
+              activeTab === 'images'
+                ? 'border-brand-500 text-brand-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Image Manager ({stats.imagesCount})
           </button>
           <button
             type="button"
@@ -60,6 +72,9 @@ export const DocumentResultView: React.FC<DocumentResultViewProps> = ({ ast, onR
         </div>
 
         {activeTab === 'markdown' && <MarkdownWorkspace sessionId={ast.session_id} />}
+        {activeTab === 'images' && (
+          <ImageManagerView sessionId={ast.session_id} initialImages={ast.images || []} />
+        )}
         {activeTab === 'structured' && <AstInspector blocks={ast.blocks} />}
         {activeTab === 'json' && <JsonViewer data={ast} />}
       </div>
