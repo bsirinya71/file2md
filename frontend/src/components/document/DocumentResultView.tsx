@@ -6,7 +6,8 @@ import { StatsSummary } from './StatsSummary';
 import { AstInspector } from './AstInspector';
 import { JsonViewer } from './JsonViewer';
 import { MarkdownWorkspace } from '../../components/markdown/MarkdownWorkspace';
-import { ImageManagerView } from '../image/ImageManagerView';
+import { ImageManagerView } from '../../components/image/ImageManagerView';
+import { ExportWorkspace } from '../../components/export/ExportWorkspace';
 
 interface DocumentResultViewProps {
   ast: DocumentAst;
@@ -14,7 +15,7 @@ interface DocumentResultViewProps {
 }
 
 export const DocumentResultView: React.FC<DocumentResultViewProps> = ({ ast, onReset }) => {
-  const [activeTab, setActiveTab] = useState<'markdown' | 'images' | 'structured' | 'json'>('markdown');
+  const [activeTab, setActiveTab] = useState<'markdown' | 'images' | 'optimize' | 'structured' | 'json'>('markdown');
   const stats = calculateAstStats(ast);
 
   return (
@@ -49,6 +50,17 @@ export const DocumentResultView: React.FC<DocumentResultViewProps> = ({ ast, onR
           </button>
           <button
             type="button"
+            onClick={() => setActiveTab('optimize')}
+            className={`pb-2.5 text-xs font-bold transition-colors border-b-2 ${
+              activeTab === 'optimize'
+                ? 'border-brand-500 text-brand-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            ⚡ Token Optimization & Export
+          </button>
+          <button
+            type="button"
             onClick={() => setActiveTab('structured')}
             className={`pb-2.5 text-xs font-bold transition-colors border-b-2 ${
               activeTab === 'structured'
@@ -75,6 +87,7 @@ export const DocumentResultView: React.FC<DocumentResultViewProps> = ({ ast, onR
         {activeTab === 'images' && (
           <ImageManagerView sessionId={ast.session_id} initialImages={ast.images || []} />
         )}
+        {activeTab === 'optimize' && <ExportWorkspace sessionId={ast.session_id} />}
         {activeTab === 'structured' && <AstInspector blocks={ast.blocks} />}
         {activeTab === 'json' && <JsonViewer data={ast} />}
       </div>
