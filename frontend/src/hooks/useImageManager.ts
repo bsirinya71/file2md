@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { ImageBlock, ImageCategory } from '../types/image';
+import { ImageBlock, ImageCategory, AiAnalysisStatus } from '../types/image';
 import { imageService } from '../services/imageService';
+import { aiService } from '../services/aiService';
 
 export function useImageManager(sessionId: string, initialImages: unknown[] = []) {
   const normalizeImages = (rawImages: unknown[]): ImageBlock[] => {
@@ -8,6 +9,7 @@ export function useImageManager(sessionId: string, initialImages: unknown[] = []
       const item = img as Record<string, unknown>;
       const metadata = (item.metadata || {}) as Record<string, unknown>;
       const classification = (item.classification || {}) as Record<string, unknown>;
+      const ai = (item.ai || {}) as Record<string, unknown>;
 
       const id = String(item.id || item.image_id || metadata.image_id || '');
 
@@ -32,8 +34,8 @@ export function useImageManager(sessionId: string, initialImages: unknown[] = []
           path: String(item.path || item.asset_path || metadata.asset_path || `images/${id}.png`),
         },
         ai: {
-          status: (item.ai_status || 'not_analyzed') as ImageBlock['ai']['status'],
-          description: (item.ai_description || null) as string | null,
+          status: (ai.status || item.ai_status || 'not_analyzed') as AiAnalysisStatus,
+          description: (ai.description || item.ai_description || null) as string | null,
         },
         classification: {
           category: (classification.category || item.category || 'content') as ImageCategory,
@@ -63,7 +65,7 @@ export function useImageManager(sessionId: string, initialImages: unknown[] = []
         setImages(normalizeImages(res.images));
       }
     } catch {
-      // Fallback to initial AST images
+      // Fallback
     } finally {
       setIsLoading(false);
     }
@@ -91,9 +93,6 @@ export function useImageManager(sessionId: string, initialImages: unknown[] = []
     );
   }, []);
 
-  /**
-   * Restore a skipped/decorative image back to 'content' category
-   */
   const restoreImage = useCallback((imageId: string) => {
     setImages((prev) =>
       prev.map((img) => {
@@ -112,24 +111,51 @@ export function useImageManager(sessionId: string, initialImages: unknown[] = []
   }, []);
 
   /**
-   * Mark image as permanently skipped/decorative
+   * Perform On-Demand AI Image Analysis
    */
-  const skipImage = useCallback((imageId: string) => {
-    setImages((prev) =>
-      prev.map((img) => {
-        if (img.id === imageId) {
-          return {
-            ...img,
-            classification: {
-              ...img.classification,
-              category: 'decorative' as ImageCategory,
-            },
-          };
-        }
-        return img;
-      })
-    );
-  }, []);
+  const analyzeImageWithAi = useCallback(
+    async (imageId: string, promptHint?: string) => {
+      // Set status to processing
+      setImages((prev) =>
+        prev.map((img) =>
+          img.id === imageId
+            ? { ...img, ai: { ...img.ai, status: 'processing' as AiAnalysisStatus } }
+            : img
+        )
+      );
+
+      try {
+        const res = await aiService.analyzeImage({
+          session_id: sessionId,
+          image_id: imageId,
+          prompt_hint: promptHint,
+        });
+
+        setImages((prev) =>
+          prev.map((img) =>
+            img.id === imageId
+              ? {
+                  ...img,
+                  ai: {
+                    status: 'completed' as AiAnalysisStatus,
+                    description: res.description,
+                  },
+                }
+              : img
+          )
+        );
+      } catch {
+        setImages((prev) =>
+          prev.map((img) =>
+            img.id === imageId
+              ? { ...img, ai: { ...img.ai, status: 'error' as AiAnalysisStatus } }
+              : img
+          )
+        );
+      }
+    },
+    [sessionId]
+  );
 
   const filteredImages = useMemo(() => {
     return images.filter((img) => {
@@ -174,7 +200,7 @@ export function useImageManager(sessionId: string, initialImages: unknown[] = []
     setSearchQuery,
     updateAltText,
     restoreImage,
-    skipImage,
+    analyzeImageWithAi,
     refreshImages: fetchImages,
   };
 }

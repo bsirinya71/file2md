@@ -25,6 +25,7 @@ export const ImageManagerView: React.FC<ImageManagerViewProps> = ({ sessionId, i
     setSearchQuery,
     updateAltText,
     restoreImage,
+    analyzeImageWithAi,
   } = useImageManager(sessionId, initialImages);
 
   const [selectedZoomImage, setSelectedZoomImage] = useState<ImageBlock | null>(null);
@@ -86,6 +87,7 @@ export const ImageManagerView: React.FC<ImageManagerViewProps> = ({ sessionId, i
                   sessionId={sessionId}
                   onZoom={setSelectedZoomImage}
                   onEditAlt={setSelectedEditAltImage}
+                  onAnalyzeAi={analyzeImageWithAi}
                 />
               ))}
             </div>
@@ -104,6 +106,7 @@ export const ImageManagerView: React.FC<ImageManagerViewProps> = ({ sessionId, i
         image={selectedZoomImage}
         sessionId={sessionId}
         onClose={() => setSelectedZoomImage(null)}
+        onAnalyzeAi={analyzeImageWithAi}
       />
 
       <EditAltModal

@@ -8,6 +8,7 @@ interface ImageCardProps {
   sessionId: string;
   onZoom: (img: ImageBlock) => void;
   onEditAlt: (img: ImageBlock) => void;
+  onAnalyzeAi?: (imageId: string) => void;
 }
 
 export const ImageCard: React.FC<ImageCardProps> = ({
@@ -15,8 +16,8 @@ export const ImageCard: React.FC<ImageCardProps> = ({
   sessionId,
   onZoom,
   onEditAlt,
+  onAnalyzeAi,
 }) => {
-  // const imageUrl = imageService.getImageUrl(sessionId, image.id, 'thumbnail');
   const imageUrl = imageService.getImageUrl(sessionId, image.id, 'original');
 
   const renderBadge = () => {
@@ -41,7 +42,8 @@ export const ImageCard: React.FC<ImageCardProps> = ({
           alt={image.markdown?.alt || image.id}
           className="object-contain max-h-full max-w-full"
           onError={(e) => {
-            (e.target as HTMLImageElement).src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="%239CA3AF" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
+            (e.target as HTMLImageElement).src =
+              'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="%239CA3AF" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
           }}
         />
 
@@ -51,14 +53,14 @@ export const ImageCard: React.FC<ImageCardProps> = ({
             onClick={() => onZoom(image)}
             className="px-2.5 py-1.5 bg-white/90 text-gray-900 rounded text-xs font-semibold hover:bg-white"
           >
-            🔍 Zoom
+            🔍 Zoom & AI
           </button>
         </div>
 
         <div className="absolute top-2 left-2 flex items-center space-x-1">
           {renderBadge()}
-          {image.isDuplicate && (
-            <span className="px-2 py-0.5 bg-red-100 text-red-800 text-[10px] font-bold rounded">DUPLICATE</span>
+          {image.ai.status === 'completed' && (
+            <span className="px-1.5 py-0.5 bg-purple-100 text-purple-800 text-[10px] font-bold rounded">✨ AI</span>
           )}
         </div>
       </div>
@@ -88,6 +90,17 @@ export const ImageCard: React.FC<ImageCardProps> = ({
             Edit
           </button>
         </div>
+
+        {onAnalyzeAi && image.ai.status !== 'completed' && (
+          <button
+            type="button"
+            onClick={() => onAnalyzeAi(image.id)}
+            disabled={image.ai.status === 'processing'}
+            className="w-full py-1 bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 text-[11px] font-semibold rounded flex items-center justify-center space-x-1 disabled:opacity-50"
+          >
+            <span>✨ Analyze AI</span>
+          </button>
+        )}
       </div>
     </div>
   );
